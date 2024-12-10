@@ -1,5 +1,5 @@
 ---
-- name: Disable UFW Firewall on Ubuntu
+- name: Fully Disable UFW Firewall on Ubuntu
   hosts: all
   become: true
   tasks:
@@ -13,12 +13,22 @@
         cmd: ufw disable
       register: disable_firewall_result
 
-    - name: Display UFW status after disabling
+    - name: Stop UFW Service
+      ansible.builtin.service:
+        name: ufw
+        state: stopped
+
+    - name: Disable UFW Service from starting on boot
+      ansible.builtin.systemd:
+        name: ufw
+        enabled: false
+
+    - name: Check UFW Service Status
       ansible.builtin.command:
-        cmd: ufw status
-      register: ufw_status
+        cmd: systemctl status ufw
+      register: ufw_service_status
       changed_when: false
 
-    - name: Debug - Show UFW status
+    - name: Debug - Show UFW Service Status
       ansible.builtin.debug:
-        msg: "{{ ufw_status.stdout }}"
+        msg: "{{ ufw_service_status.stdout }}"
