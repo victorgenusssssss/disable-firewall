@@ -1,18 +1,27 @@
 ---
-- name: Manage Firewall
+- name: Manage UFW Firewall on Ubuntu
   hosts: all
   become: true
   vars:
     firewall_state: "disabled"   # ตั้งค่าเป็น "enabled" เพื่อเปิด Firewall หรือ "disabled" เพื่อปิด
 
   tasks:
-    - name: Set Firewall state
-      ansible.builtin.service:
-        name: firewalld
-        state: "{{ firewall_state }}"
-      when: ansible_os_family == "RedHat"
-
-    - name: Set UFW Firewall state (สำหรับ Ubuntu)
-      ansible.builtin.command:
-        cmd: "{{ 'ufw enable' if firewall_state == 'enabled' else 'ufw disable' }}"
+    - name: Ensure UFW is installed
+      ansible.builtin.apt:
+        name: ufw
+        state: present
       when: ansible_os_family == "Debian"
+
+    - name: Disable UFW Firewall
+      ansible.builtin.command:
+        cmd: ufw disable
+      when:
+        - firewall_state == "disabled"
+        - ansible_os_family == "Debian"
+
+    - name: Enable UFW Firewall
+      ansible.builtin.command:
+        cmd: ufw enable
+      when:
+        - firewall_state == "enabled"
+        - ansible_os_family == "Debian"
